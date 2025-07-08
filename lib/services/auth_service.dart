@@ -1,0 +1,151 @@
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+class AuthService {
+  final String _baseUrl = dotenv.env['API_URL']!;
+  Future<bool> login(String correo, String password) async {
+    final url = Uri.parse('$_baseUrl/login');
+    // debugPrint('🔐 Intentando login en: $url');
+    // debugPrint('📧 Correo: $correo');
+    try {
+      final response = await http.post(
+        url,
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: {
+          'correo': correo,
+          'password': password,
+        },
+      );
+      // debugPrint('🔄 Respuesta del servidor: ${response.statusCode}');
+      // debugPrint('📄 Body de respuesta: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        // Validación de estructura de respuesta
+        if (data['token'] == null || data['usuario'] == null || data['usuario']['id'] == null) {
+          //debugPrint('❌ Estructura de respuesta incorrecta: $data');
+          throw Exception('La respuesta del servidor no tiene el formato esperado');
+        }
+        final token = data['token'] as String;
+        final usuario = data['usuario'] as Map<String, dynamic>;
+        final usuarioId = usuario['id'] as int;
+        // debugPrint('🔑 Token recibido: ${token.substring(0, 10)}...');
+        // debugPrint('👤 ID de usuario: $usuarioId');
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', token);
+        await prefs.setInt('usuario_id', usuarioId);
+        // Verificar que se guardó correctamente
+        final savedToken = prefs.getString('token');
+        if (savedToken != token) {
+          //debugPrint('❌ Error al guardar el token en SharedPreferences');
+          throw Exception('Error al guardar la sesión');
+        }
+        //debugPrint('✅ Login exitoso');
+        return true;
+      } else {
+        final errorData = json.decode(response.body);
+        final errorMsg = errorData['message'] ?? 'Error de autenticación';
+        //debugPrint('❌ Error en login: $errorMsg');
+        throw Exception(errorMsg);
+      }
+    } catch (e) {
+      //debugPrint('‼️ Error en login: $e');
+      throw Exception('Error al conectar con el servidor: ${e.toString()}');
+    }
+  }
+
+  Future<void> logout() async {
+    //debugPrint('🔐 Intentando logout'); 
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      if (token == null || token.isEmpty) {
+        //debugPrint('⚠️ No hay token almacenado para logout');
+        return;
+      }
+     // debugPrint('🔑 Token usado para logout: ${token.substring(0, 10)}...');
+      final url = Uri.parse('$_baseUrl/logout');
+      final response = await http.post(
+        url,
+        headers: {
+          'Authorization': 'Bearer $token',
+          'Accept': 'application/json',
+        },
+      );
+      //debugPrint('🔄 Respuesta del logout: ${response.statusCode}');
+      if (response.statusCode == 200) {
+        await prefs.remove('token');
+        await prefs.remove('usuario_id');
+        //debugPrint('✅ Logout exitoso');
+      } else {
+        final error = json.decode(response.body);
+        //debugPrint('❌ Error en logout: ${error['message']}');
+        throw Exception(error['message'] ?? 'Error al cerrar sesión');
+      }
+    } catch (e) {
+      //debugPrint('‼️ Error en logout: $e');
+      throw Exception('Error al cerrar sesión: ${e.toString()}');
+    }
+  }
+
+  Future<bool> isLoggedIn() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+      final isLogged = token != null && token.isNotEmpty;
+      //debugPrint('🔍 Verificando sesión: ${isLogged ? 'ACTIVA' : 'INACTIVA'}');
+      // if (isLogged) {
+      //   debugPrint('🔑 Token encontrado: ${token!.substring(0, 10)}...');
+      // }
+      return isLogged;
+    } catch (e) {
+      //debugPrint('‼️ Error al verificar sesión: $e');
+      return false;
+    }
+  }
+
+  Future<String?> getCurrentToken() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token')?.trim();
+      // //debugPrint('🔍 Obteniendo token actual');
+      // if (token != null) {
+      //   //debugPrint('🔑 Token actual: ${token.substring(0, 10)}...');
+      // } else {
+      //   //debugPrint('⚠️ No hay token almacenado');
+      // }
+      return token;
+    } catch (e) {
+      //debugPrint('‼️ Error al obtener token: $e');
+      return null;
+    }
+  }
+
+  Future<int?> getCurrentUserId() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getInt('usuario_id');      
+      // debugPrint('🔍 Obteniendo ID de usuario actual');
+      // if (userId != null) {
+      //   debugPrint('👤 ID de usuario: $userId');
+      // } else {
+      //   debugPrint('⚠️ No hay ID de usuario almacenado');
+      // }
+      return userId;
+    } catch (e) {
+      //debugPrint('‼️ Error al obtener ID de usuario: $e');
+      return null;
+    }
+  }
+}

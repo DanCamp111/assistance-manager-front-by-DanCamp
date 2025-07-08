@@ -1,0 +1,33 @@
+name: imdec_front
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0
+
+environment:
+  sdk: ^3.8.1
+
+dependencies:
+  flutter:
+    sdk: flutter
+  http: ^0.13.5           # Para llamadas API
+  provider: ^6.0.5        # Gestión de estado
+  flutter_dotenv: ^5.0.2  # Variables de entorno
+  intl: ^0.18.1          # Formato fechas/horas
+  shared_preferences: ^2.2.2 # Almacenamiento local
+  camera: ^0.10.5        # Para tomar fotos de asistencia
+  file_picker: ^5.3.3    # Para subir justificantes
+  fluttertoast: ^8.2.2   # Notificaciones toast
+  pdf: ^3.10.2           # Generar PDF (opcional)
+  excel: ^2.0.0   
+  mime: ^2.0.0 
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - .env
+
