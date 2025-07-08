@@ -35,6 +35,10 @@ class HomeScreen extends StatelessWidget {
               child: const Text("Registrar Asistencia"),
             ),
             ElevatedButton(
+              onPressed: () => Navigator.pushNamed(context, '/asistencias/historial'),
+              child: const Text("Ver Asistencias de la Semana"),
+            ),
+            ElevatedButton(
               onPressed: () => Navigator.pushNamed(context, '/incidencias'),
               child: const Text("Ver Incidencias"),
             ),

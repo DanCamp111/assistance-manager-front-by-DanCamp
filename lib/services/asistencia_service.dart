@@ -226,4 +226,33 @@ extension AsistenciaFotoUpload on AsistenciaService {
       throw Exception('Error al subir foto: ${e.toString()}');
     }
   }
+
+Future<List<Map<String, dynamic>>> getHistorialSemanal() async {
+  try {
+    final uri = Uri.parse('$_baseUrl/asistencias/semanal');
+    debugPrint('📡 GET Historial Semanal: $uri');
+
+    final headers = await _getAuthHeaders();
+    debugPrint('🧾 Headers enviados: $headers');
+
+    final response = await http.get(uri, headers: headers);
+
+    debugPrint('🔄 Código de respuesta: ${response.statusCode}');
+    debugPrint('📄 Body de respuesta: ${response.body}');
+
+    if (response.statusCode == 200) {
+      final List<dynamic> data = jsonDecode(response.body);
+      debugPrint('✅ Historial obtenido: ${data.length} días');
+      return data.cast<Map<String, dynamic>>();
+    } else {
+      final error = jsonDecode(response.body);
+      debugPrint('❌ Error en respuesta: ${error['message']}');
+      throw Exception(error['message'] ?? 'Error al obtener historial');
+    }
+  } catch (e) {
+    debugPrint('‼️ Excepción al cargar historial semanal: $e');
+    throw Exception('Error al cargar historial semanal: ${e.toString()}');
+  }
+}
+
 }

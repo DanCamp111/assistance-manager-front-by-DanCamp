@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:imdec_front/screens/asistencias/asistencia_form_screen.dart';
+import 'package:imdec_front/screens/asistencias/historial_asistencia_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
 
@@ -23,6 +24,7 @@ class MainApp extends StatelessWidget {
         '/': (_) => const LoginScreen(),
         '/home': (_) => const HomeScreen(),
         '/asistencias': (context) => const AsistenciaFormScreen(),
+        '/asistencias/historial': (context) => const HistorialAsistenciaScreen(),
       },
     );
   }
