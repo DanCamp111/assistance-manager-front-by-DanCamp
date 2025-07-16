@@ -46,6 +46,10 @@ class HomeScreen extends StatelessWidget {
               onPressed: () => Navigator.pushNamed(context, '/incidencias'),
               child: const Text("Registrar Incidencia"),
             ),
+            ElevatedButton(
+              onPressed: () => Navigator.pushNamed(context, '/incidencias/supervisor'),
+              child: const Text("Revisión de Incidencias"),
+            ),
             const Spacer(),
             ElevatedButton(
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red),

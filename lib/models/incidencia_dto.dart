@@ -12,6 +12,7 @@ class IncidenciaDTO {
   final int? supervisorId;
   final String? observaciones;
   final String? fechaSolicitud; // formato timestamp
+  final String? nombreCompleto; 
 
   IncidenciaDTO({
     this.id,
@@ -27,9 +28,15 @@ class IncidenciaDTO {
     this.supervisorId,
     this.observaciones,
     this.fechaSolicitud,
+    this.nombreCompleto, // <-- en constructor
   });
 
   factory IncidenciaDTO.fromJson(Map<String, dynamic> json) {
+    final usuario = json['usuario'];
+    final nombre = usuario?['name'] ?? '';
+    final apellidoPaterno = usuario?['last_name'] ?? '';
+    final apellidoMaterno = usuario?['middle_name'] ?? '';
+
     return IncidenciaDTO(
       id: json['id'],
       usuarioId: json['usuario_id'],
@@ -46,6 +53,7 @@ class IncidenciaDTO {
       supervisorId: json['supervisor_id'],
       observaciones: json['observaciones'],
       fechaSolicitud: json['fecha_solicitud'],
+      nombreCompleto: "$nombre $apellidoPaterno $apellidoMaterno".trim(),
     );
   }
 
