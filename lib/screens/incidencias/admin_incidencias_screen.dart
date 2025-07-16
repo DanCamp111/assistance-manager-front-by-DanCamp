@@ -3,6 +3,8 @@ import 'package:imdec_front/models/incidencia_dto.dart';
 import 'package:imdec_front/services/incidencia_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class AdminIncidenciasScreen extends StatefulWidget {
   const AdminIncidenciasScreen({super.key});
@@ -77,9 +79,24 @@ class _AdminIncidenciasScreenState extends State<AdminIncidenciasScreen> {
         DataCell(
           incidencia.documentoJustificativo != null
               ? InkWell(
-                  onTap: () {
-                    final url = incidencia.documentoJustificativo!;
-                    // Aquí podrías usar url_launcher si lo deseas
+                  onTap: () async {
+                    final apiUrl = dotenv
+                        .env['API_URL']!; // e.g. http://127.0.0.1:8000/api
+                    final baseUrl = apiUrl.replaceAll('/api', '');
+                    final rutaRelativa = incidencia.documentoJustificativo!;
+                    final urlCompleta = baseUrl + rutaRelativa;
+
+                    final uri = Uri.parse(urlCompleta);
+
+                    if (await canLaunchUrl(uri)) {
+                      await launchUrl(uri);
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('No se pudo abrir el PDF'),
+                        ),
+                      );
+                    }
                   },
                   child: const Text(
                     'Ver PDF',

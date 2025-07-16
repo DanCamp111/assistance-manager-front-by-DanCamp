@@ -120,27 +120,15 @@ class IncidenciaService {
     };
 
     final headers = await _getAuthHeaders();
-
-    print('🔁 Cambiando estatus de incidencia');
-    print('🔗 URL: $uri');
-    print('📤 Headers: $headers');
-    print('📦 Body: ${jsonEncode(body)}');
-
     final response = await http.put(
       uri,
       headers: headers,
       body: jsonEncode(body),
     );
-
-    print('📥 Status Code: ${response.statusCode}');
-    print('📥 Response Body: ${response.body}');
-
     if (response.statusCode == 200) {
-      print('✅ Estatus cambiado correctamente');
       return IncidenciaDTO.fromJson(jsonDecode(response.body));
     } else {
       final error = jsonDecode(response.body);
-      print('❌ Error al cambiar estatus: ${error['message']}');
       throw Exception(error['message'] ?? 'Error al cambiar estatus');
     }
   }

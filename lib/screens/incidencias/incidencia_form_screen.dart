@@ -55,7 +55,10 @@ class _IncidenciaFormScreenState extends State<IncidenciaFormScreen> {
   }
 
   Future<void> _pickFile() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.any);
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['pdf', 'jpg', 'jpeg', 'png'],
+    );
     if (result != null) {
       setState(() {
         _file = result.files.first;
@@ -94,7 +97,6 @@ class _IncidenciaFormScreenState extends State<IncidenciaFormScreen> {
       documentoJustificativo: null,
     );
 
-
     try {
       final creada = await IncidenciaService().createIncidencia(incidencia);
 
@@ -122,9 +124,15 @@ class _IncidenciaFormScreenState extends State<IncidenciaFormScreen> {
           children: const [
             Icon(Icons.check_circle_outline, color: Colors.green, size: 60),
             SizedBox(height: 16),
-            Text("¡Registro exitoso!", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            Text(
+              "¡Registro exitoso!",
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
             SizedBox(height: 8),
-            Text("Tu incidencia ha sido registrada correctamente.", textAlign: TextAlign.center),
+            Text(
+              "Tu incidencia ha sido registrada correctamente.",
+              textAlign: TextAlign.center,
+            ),
           ],
         ),
         actions: [
@@ -157,81 +165,238 @@ class _IncidenciaFormScreenState extends State<IncidenciaFormScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Registrar Incidencia")),
+      appBar: AppBar(
+        title: const Text("Registro de Incidencias"),
+        centerTitle: true,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            DropdownButtonFormField<String>(
-              value: _tipoSeleccionado,
-              items: _tipos.map((tipo) {
-                return DropdownMenuItem(value: tipo, child: Text(tipo));
-              }).toList(),
-              onChanged: (val) => setState(() => _tipoSeleccionado = val),
-              decoration: const InputDecoration(labelText: "Tipo de Incidencia"),
+            // Tipo de incidencia
+            const Text(
+              "Tipo de Incidencia *",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            if (_tipoSeleccionado == 'Otro')
-              TextField(
-                controller: _otroTipoCtrl,
-                decoration: const InputDecoration(labelText: "Especificar tipo"),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey),
+                borderRadius: BorderRadius.circular(4),
               ),
+              child: DropdownButton<String>(
+                value: _tipoSeleccionado,
+                isExpanded: true,
+                underline: const SizedBox(),
+                hint: const Text("Seleccione un tipo"),
+                items: _tipos.map((tipo) {
+                  return DropdownMenuItem(
+                    value: tipo,
+                    child: Text(tipo),
+                  );
+                }).toList(),
+                onChanged: (val) => setState(() => _tipoSeleccionado = val),
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Campo para especificar tipo si es "Otro"
+            if (_tipoSeleccionado == 'Otro')
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    "Especificar tipo *",
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: _otroTipoCtrl,
+                    decoration: const InputDecoration(
+                      hintText: "Ingrese el tipo de incidencia",
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+              ),
+
+            // Motivo
+            const Text(
+              "Motivo *",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
             TextField(
               controller: _motivoCtrl,
-              decoration: const InputDecoration(labelText: "Motivo"),
               maxLines: 3,
+              decoration: const InputDecoration(
+                hintText: "Describa el motivo de la incidencia",
+              ),
             ),
-            TextField(
-              controller: _fechaCtrl,
-              readOnly: true,
-              decoration: const InputDecoration(labelText: "Fecha de Ausencia"),
-              onTap: () async {
-                final DateTime? picked = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now(),
-                  firstDate: DateTime(2000),
-                  lastDate: DateTime(2100),
-                );
-                if (picked != null) {
-                  setState(() {
-                    _fechaCtrl.text = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
-                  });
-                }
-              },
+            const SizedBox(height: 16),
+
+            // Fecha
+            const Text(
+              "Fecha de Ausencia *",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
+            const SizedBox(height: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+              decoration: BoxDecoration(
+                border: Border.all(color: Colors.grey),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Row(
+                children: [
+                  Text(_fechaCtrl.text),
+                  const Spacer(),
+                  IconButton(
+                    icon: const Icon(Icons.calendar_today),
+                    onPressed: () async {
+                      final DateTime? picked = await showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2000),
+                        lastDate: DateTime(2100),
+                      );
+                      if (picked != null) {
+                        setState(() {
+                          _fechaCtrl.text =
+                              "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+                        });
+                      }
+                    },
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+
+            // Horas (Salida y Regreso)
             Row(
               children: [
                 Expanded(
-                  child: TextField(
-                    controller: _horaSalidaCtrl,
-                    readOnly: true,
-                    decoration: const InputDecoration(labelText: "Hora de Salida"),
-                    onTap: () => _pickHora(_horaSalidaCtrl),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Hora de Salida",
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          children: [
+                            Text(_horaSalidaCtrl.text.isEmpty ? "--:--:--" : _horaSalidaCtrl.text),
+                            const Spacer(),
+                            IconButton(
+                              icon: const Icon(Icons.access_time),
+                              onPressed: () => _pickHora(_horaSalidaCtrl),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 16),
                 Expanded(
-                  child: TextField(
-                    controller: _horaRegresoCtrl,
-                    readOnly: true,
-                    decoration: const InputDecoration(labelText: "Hora de Regreso"),
-                    onTap: () => _pickHora(_horaRegresoCtrl),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        "Hora de Regreso",
+                        style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 8),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Row(
+                          children: [
+                            Text(_horaRegresoCtrl.text.isEmpty ? "--:--:--" : _horaRegresoCtrl.text),
+                            const Spacer(),
+                            IconButton(
+                              icon: const Icon(Icons.access_time),
+                              onPressed: () => _pickHora(_horaRegresoCtrl),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
+            const SizedBox(height: 16),
+
+            // Hora de transporte
+            const Text(
+              "Hora de Transporte (opcional)",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
             TextField(
               controller: _horaTransporteCtrl,
-              decoration: const InputDecoration(labelText: "Hora de Transporte (opcional)"),
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                hintText: "Ingrese el tiempo de transporte en horas",
+              ),
             ),
             const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _pickFile,
-              child: Text(_file != null ? "Documento seleccionado" : "Seleccionar Documento"),
+
+            // Documento justificativo
+            const Text(
+              "Documento Justificativo *",
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: _submit,
-              child: const Text("Guardar Incidencia"),
+            const SizedBox(height: 8),
+            ElevatedButton.icon(
+              onPressed: _pickFile,
+              icon: const Icon(Icons.upload_file),
+              label: Text(_file != null ? _file!.name : "Seleccionar documento"),
+              style: ElevatedButton.styleFrom(
+                minimumSize: const Size(double.infinity, 50),
+                backgroundColor: Colors.grey[200],
+                foregroundColor: Colors.black,
+              ),
+            ),
+            if (_file == null)
+              const Padding(
+                padding: EdgeInsets.only(top: 8),
+                child: Text(
+                  "Ningún archivo seleccionado",
+                  style: TextStyle(color: Colors.grey),
+                ),
+              ),
+            const SizedBox(height: 24),
+
+            // Botón de guardar
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton(
+                onPressed: _submit,
+                style: ElevatedButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  backgroundColor: const Color.fromARGB(255, 243, 33, 166),
+                  foregroundColor: Colors.white,
+                ),
+                child: const Text(
+                  "GUARDAR INCIDENCIA",
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
             ),
           ],
         ),
