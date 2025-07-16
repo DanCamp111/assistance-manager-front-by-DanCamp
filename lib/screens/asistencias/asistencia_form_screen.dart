@@ -135,13 +135,13 @@ class _AsistenciaFormScreenState extends State<AsistenciaFormScreen> {
               ],
               decoration: const InputDecoration(labelText: "Tipo de Registro"),
             ),
-            TextField(
-              controller: _fechaCtrl,
+            InputDecorator(
+              child: Text(_fechaCtrl.text) ,
               decoration: const InputDecoration(labelText: "Fecha (YYYY-MM-DD)"),
             ),
-            TextField(
-              controller: _horaCtrl,
+            InputDecorator(
               decoration: const InputDecoration(labelText: "Hora (HH:MM:SS)"),
+              child: Text(_horaCtrl.text),
             ),
             const SizedBox(height: 20),
             ElevatedButton(

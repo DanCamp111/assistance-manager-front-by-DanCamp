@@ -182,7 +182,21 @@ class _IncidenciaFormScreenState extends State<IncidenciaFormScreen> {
             ),
             TextField(
               controller: _fechaCtrl,
-              decoration: const InputDecoration(labelText: "Fecha de Ausencia (YYYY-MM-DD)"),
+              readOnly: true,
+              decoration: const InputDecoration(labelText: "Fecha de Ausencia"),
+              onTap: () async {
+                final DateTime? picked = await showDatePicker(
+                  context: context,
+                  initialDate: DateTime.now(),
+                  firstDate: DateTime(2000),
+                  lastDate: DateTime(2100),
+                );
+                if (picked != null) {
+                  setState(() {
+                    _fechaCtrl.text = "${picked.year}-${picked.month.toString().padLeft(2, '0')}-${picked.day.toString().padLeft(2, '0')}";
+                  });
+                }
+              },
             ),
             Row(
               children: [
