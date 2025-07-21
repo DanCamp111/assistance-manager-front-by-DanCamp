@@ -5,6 +5,8 @@ import 'package:imdec_front/screens/asistencias/historial_asistencia_screen.dart
 import 'package:imdec_front/screens/asistencias/monitoreo_asistencias_screen.dart';
 import 'package:imdec_front/screens/incidencias/admin_incidencias_screen.dart';
 import 'package:imdec_front/screens/incidencias/incidencia_form_screen.dart';
+import 'package:imdec_front/screens/users/carrera_admin_screen.dart';
+import 'package:imdec_front/screens/users/usuario_admin_screen.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/home/home_screen.dart';
 
@@ -31,6 +33,8 @@ class MainApp extends StatelessWidget {
         '/asistencias/monitoreo': (context) => const MonitoreoAsistenciasScreen(),
         '/incidencias': (context) => const IncidenciaFormScreen(),
         '/incidencias/supervisor': (context) => const AdminIncidenciasScreen(),
+        '/carreras': (context) => const CarreraAdminScreen(),
+        '/usuarios': (context) =>  UsuarioAdminScreen(),
       },
     );
   }
