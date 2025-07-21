@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:imdec_front/models/carrera_dto.dart';
 import 'package:imdec_front/models/rol_dto.dart';
 import 'package:imdec_front/models/usuario_dto.dart';
@@ -7,8 +8,10 @@ import '../../services/usuario_service.dart';
 import '../../services/carrera_service.dart';
 
 class UsuarioAdminScreen extends StatefulWidget {
+  const UsuarioAdminScreen({super.key});
+
   @override
-  _UsuarioAdminScreenState createState() => _UsuarioAdminScreenState();
+  State<UsuarioAdminScreen> createState() => _UsuarioAdminScreenState();
 }
 
 class _UsuarioAdminScreenState extends State<UsuarioAdminScreen> {
@@ -19,14 +22,14 @@ class _UsuarioAdminScreenState extends State<UsuarioAdminScreen> {
   List<RolDTO> _roles = [];
   List<CarreraDTO> _carreras = [];
 
-  UsuarioDTO? _editingUsuario;
+  UsuarioDTO? _editando;
   bool _obscurePassword = true;
 
-  final TextEditingController _nombreController = TextEditingController();
-  final TextEditingController _apellidoPController = TextEditingController();
-  final TextEditingController _apellidoMController = TextEditingController();
-  final TextEditingController _correoController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _nombreCtrl = TextEditingController();
+  final TextEditingController _apellidoPCtrl = TextEditingController();
+  final TextEditingController _apellidoMCtrl = TextEditingController();
+  final TextEditingController _correoCtrl = TextEditingController();
+  final TextEditingController _passwordCtrl = TextEditingController();
 
   int? _rolId;
   int? _carreraId;
@@ -35,301 +38,281 @@ class _UsuarioAdminScreenState extends State<UsuarioAdminScreen> {
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _cargarDatos();
   }
 
-  Future<void> _loadData() async {
+  Future<void> _cargarDatos() async {
     try {
       final usuarios = await _service.getUsuarios();
       final roles = await RolService().getRoles();
       final carreras = await CarreraService().getCarreras();
-      
+
       setState(() {
         _usuarios = usuarios;
         _roles = roles;
         _carreras = carreras;
       });
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error al cargar datos: ${e.toString()}')),
-      );
+      Fluttertoast.showToast(msg: "Error al cargar datos: $e");
     }
   }
 
-  void _resetForm() {
+  void _limpiarFormulario() {
     _formKey.currentState?.reset();
-    _nombreController.clear();
-    _apellidoPController.clear();
-    _apellidoMController.clear();
-    _correoController.clear();
-    _passwordController.clear();
+    _nombreCtrl.clear();
+    _apellidoPCtrl.clear();
+    _apellidoMCtrl.clear();
+    _correoCtrl.clear();
+    _passwordCtrl.clear();
     _rolId = null;
     _carreraId = null;
     _status = 'activo';
-    _editingUsuario = null;
+    _editando = null;
     _obscurePassword = true;
     setState(() {});
   }
 
-  Future<void> _submitForm() async {
+  Future<void> _guardarUsuario() async {
     if (!_formKey.currentState!.validate()) return;
 
+    final usuario = UsuarioDTO(
+      id: _editando?.id,
+      nombre: _nombreCtrl.text.trim(),
+      apellidoPaterno: _apellidoPCtrl.text.trim(),
+      apellidoMaterno: _apellidoMCtrl.text.trim(),
+      correo: _correoCtrl.text.trim(),
+      password: _passwordCtrl.text.isEmpty ? null : _passwordCtrl.text,
+      rolId: _rolId ?? 0,
+      carreraId: _carreraId,
+      status: _status,
+    );
+
     try {
-      final usuario = UsuarioDTO(
-        id: _editingUsuario?.id, // Usamos ?. para manejar null
-        nombre: _nombreController.text,
-        apellidoPaterno: _apellidoPController.text,
-        apellidoMaterno: _apellidoMController.text,
-        correo: _correoController.text,
-        password: _passwordController.text.isEmpty ? null : _passwordController.text,
-        rolId: _rolId ?? 0, // Valor por defecto o manejo de error
-        carreraId: _carreraId,
-        status: _status,
-      );
-
-      if (_editingUsuario == null) {
-        await _service.crearUsuario(usuario);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Usuario creado exitosamente')),
-        );
-      } else {
+      if (_editando != null) {
         await _service.actualizarUsuario(usuario);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Usuario actualizado exitosamente')),
-        );
+        Fluttertoast.showToast(msg: "Usuario actualizado");
+      } else {
+        await _service.crearUsuario(usuario);
+        Fluttertoast.showToast(msg: "Usuario creado");
       }
-
-      _resetForm();
-      await _loadData();
+      _limpiarFormulario();
+      await _cargarDatos();
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error: ${e.toString()}')),
-      );
+      Fluttertoast.showToast(msg: "Error al guardar usuario: $e");
     }
   }
 
-  void _editUsuario(UsuarioDTO usuario) {
-    setState(() {
-      _editingUsuario = usuario;
-      _nombreController.text = usuario.nombre;
-      _apellidoPController.text = usuario.apellidoPaterno;
-      _apellidoMController.text = usuario.apellidoMaterno;
-      _correoController.text = usuario.correo;
-      _passwordController.clear();
-      _rolId = usuario.rolId;
-      _carreraId = usuario.carreraId;
-      _status = usuario.status;
-      _obscurePassword = true;
-    });
+  void _editarUsuario(UsuarioDTO usuario) {
+    _editando = usuario;
+    _nombreCtrl.text = usuario.nombre;
+    _apellidoPCtrl.text = usuario.apellidoPaterno;
+    _apellidoMCtrl.text = usuario.apellidoMaterno;
+    _correoCtrl.text = usuario.correo;
+    _passwordCtrl.clear();
+    _rolId = usuario.rolId;
+    _carreraId = usuario.carreraId;
+    _status = usuario.status;
+    _obscurePassword = true;
+    setState(() {});
   }
 
-  Future<void> _deleteUsuario(int id) async {
-    final confirmed = await showDialog<bool>(
+  Future<void> _eliminarUsuario(int id) async {
+    final confirmado = await showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text('Confirmar eliminación'),
-        content: Text('¿Estás seguro de que deseas eliminar este usuario?'),
+      builder: (_) => AlertDialog(
+        title: const Text("Confirmar eliminación"),
+        content: const Text("¿Seguro que quieres eliminar este usuario?"),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancelar'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text('Eliminar'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancelar")),
+          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text("Eliminar")),
         ],
       ),
     );
 
-    if (confirmed == true) {
+    if (confirmado == true) {
       try {
         await _service.eliminarUsuario(id);
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Usuario eliminado exitosamente')),
-        );
-        await _loadData();
+        Fluttertoast.showToast(msg: "Usuario eliminado");
+        await _cargarDatos();
       } catch (e) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al eliminar usuario: ${e.toString()}')),
-        );
+        Fluttertoast.showToast(msg: "Error al eliminar usuario: $e");
       }
     }
   }
 
+  Widget _tituloCampo(String texto) => Padding(
+        padding: const EdgeInsets.only(top: 16.0, bottom: 8),
+        child: Text(texto, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+      );
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Administrar Usuarios')),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(children: [
-          Form(
-            key: _formKey,
-            child: Wrap(
-              spacing: 16,
-              runSpacing: 16,
-              children: [
-                SizedBox(
-                  width: 300,
-                  child: TextFormField(
-                    controller: _nombreController,
-                    decoration: InputDecoration(labelText: 'Nombre'),
-                    validator: (value) => value!.isEmpty ? 'Campo requerido' : null,
+      appBar: AppBar(title: const Text("Administrar Usuarios"), centerTitle: true),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(20),
+        child: Column(
+          children: [
+            Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _tituloCampo("Nombre *"),
+                  TextFormField(
+                    controller: _nombreCtrl,
+                    decoration: const InputDecoration(border: OutlineInputBorder()),
+                    validator: (v) => v == null || v.isEmpty ? "Requerido" : null,
                   ),
-                ),
-                SizedBox(
-                  width: 300,
-                  child: TextFormField(
-                    controller: _apellidoPController,
-                    decoration: InputDecoration(labelText: 'Apellido Paterno'),
-                    validator: (value) => value!.isEmpty ? 'Campo requerido' : null,
+                  _tituloCampo("Apellido Paterno *"),
+                  TextFormField(
+                    controller: _apellidoPCtrl,
+                    decoration: const InputDecoration(border: OutlineInputBorder()),
+                    validator: (v) => v == null || v.isEmpty ? "Requerido" : null,
                   ),
-                ),
-                SizedBox(
-                  width: 300,
-                  child: TextFormField(
-                    controller: _apellidoMController,
-                    decoration: InputDecoration(labelText: 'Apellido Materno'),
-                    validator: (value) => value!.isEmpty ? 'Campo requerido' : null,
+                  _tituloCampo("Apellido Materno *"),
+                  TextFormField(
+                    controller: _apellidoMCtrl,
+                    decoration: const InputDecoration(border: OutlineInputBorder()),
+                    validator: (v) => v == null || v.isEmpty ? "Requerido" : null,
                   ),
-                ),
-                SizedBox(
-                  width: 300,
-                  child: TextFormField(
-                    controller: _correoController,
-                    decoration: InputDecoration(labelText: 'Correo'),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Campo requerido';
-                      }
-                      if (!value.contains('@')) {
-                        return 'Ingrese un correo válido';
-                      }
+                  _tituloCampo("Correo *"),
+                  TextFormField(
+                    controller: _correoCtrl,
+                    decoration: const InputDecoration(border: OutlineInputBorder()),
+                    validator: (v) {
+                      if (v == null || v.isEmpty) return "Requerido";
+                      if (!v.contains("@")) return "Correo inválido";
                       return null;
                     },
                   ),
-                ),
-                SizedBox(
-                  width: 300,
-                  child: TextFormField(
-                    controller: _passwordController,
+                  _tituloCampo("Contraseña ${_editando == null ? "*" : "(dejar vacío para no cambiar)"}"),
+                  TextFormField(
+                    controller: _passwordCtrl,
                     decoration: InputDecoration(
-                      labelText: 'Contraseña',
+                      border: const OutlineInputBorder(),
                       suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword ? Icons.visibility : Icons.visibility_off,
-                        ),
-                        onPressed: () {
-                          setState(() {
-                            _obscurePassword = !_obscurePassword;
-                          });
-                        },
+                        icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                       ),
                     ),
                     obscureText: _obscurePassword,
-                    validator: (value) {
-                      if (_editingUsuario == null && (value == null || value.isEmpty)) {
-                        return 'La contraseña es requerida';
-                      }
-                      if (value != null && value.isNotEmpty && value.length < 8) {
-                        return 'La contraseña debe tener al menos 8 caracteres';
-                      }
+                    validator: (v) {
+                      if (_editando == null && (v == null || v.isEmpty)) return "Requerido";
+                      if (v != null && v.isNotEmpty && v.length < 8) return "Mínimo 8 caracteres";
                       return null;
                     },
                   ),
-                ),
-                SizedBox(
-                  width: 300,
-                  child: DropdownButtonFormField<int>(
+                  _tituloCampo("Rol *"),
+                  DropdownButtonFormField<int>(
                     value: _rolId,
-                    decoration: InputDecoration(labelText: 'Rol'),
-                    items: _roles.map((rol) {
-                      return DropdownMenuItem<int>(
-                        value: rol.id,
-                        child: Text(rol.nombre),
-                      );
-                    }).toList(),
-                    onChanged: (value) => setState(() => _rolId = value),
-                    validator: (value) => value == null ? 'Campo requerido' : null,
-                  ),
-                ),
-                SizedBox(
-                  width: 300,
-                  child: DropdownButtonFormField<int>(
-                    value: _carreraId,
-                    decoration: InputDecoration(labelText: 'Carrera'),
-                    items: _carreras.map((carrera) {
-                      return DropdownMenuItem<int>(
-                        value: carrera.id,
-                        child: Text(carrera.nombre),
-                      );
-                    }).toList(),
-                    onChanged: (value) => setState(() => _carreraId = value),
-                  ),
-                ),
-                SizedBox(
-                  width: 300,
-                  child: DropdownButtonFormField<String>(
-                    value: _status,
-                    decoration: InputDecoration(labelText: 'Estatus'),
-                    items: ['activo', 'inactivo']
-                        .map((e) => DropdownMenuItem(value: e, child: Text(e)))
+                    items: _roles
+                        .map((r) => DropdownMenuItem(value: r.id, child: Text(r.nombre)))
                         .toList(),
-                    onChanged: (value) => setState(() => _status = value!),
+                    onChanged: (v) => setState(() => _rolId = v),
+                    decoration: const InputDecoration(border: OutlineInputBorder()),
+                    validator: (v) => v == null ? "Requerido" : null,
                   ),
-                ),
-                ElevatedButton(
-                  onPressed: _submitForm,
-                  child: Text(_editingUsuario == null ? 'Agregar' : 'Actualizar'),
-                ),
-                if (_editingUsuario != null)
-                  TextButton(
-                    onPressed: _resetForm,
-                    child: Text('Cancelar'),
-                  )
-              ],
-            ),
-          ),
-          const SizedBox(height: 24),
-          Expanded(
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                columns: const [
-                  DataColumn(label: Text('Nombre')),
-                  DataColumn(label: Text('Correo')),
-                  DataColumn(label: Text('Rol')),
-                  DataColumn(label: Text('Carrera')),
-                  DataColumn(label: Text('Estatus')),
-                  DataColumn(label: Text('Acciones')),
+                  _tituloCampo("Carrera"),
+                  DropdownButtonFormField<int>(
+                    value: _carreraId,
+                    items: _carreras
+                        .map((c) => DropdownMenuItem(value: c.id, child: Text(c.nombre)))
+                        .toList(),
+                    onChanged: (v) => setState(() => _carreraId = v),
+                    decoration: const InputDecoration(border: OutlineInputBorder()),
+                  ),
+                  _tituloCampo("Estatus"),
+                  DropdownButtonFormField<String>(
+                    value: _status,
+                    items: const [
+                      DropdownMenuItem(value: 'activo', child: Text('Activo')),
+                      DropdownMenuItem(value: 'inactivo', child: Text('Inactivo')),
+                    ],
+                    onChanged: (v) => setState(() => _status = v!),
+                    decoration: const InputDecoration(border: OutlineInputBorder()),
+                  ),
+                  const SizedBox(height: 24),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _guardarUsuario,
+                      icon: Icon(_editando == null ? Icons.add : Icons.save),
+                      label: Text(_editando == null ? "Agregar Usuario" : "Actualizar Usuario"),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        backgroundColor: const Color.fromARGB(255, 243, 33, 152),
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ),
+                  if (_editando != null)
+                    TextButton(
+                      onPressed: _limpiarFormulario,
+                      child: const Text("Cancelar edición"),
+                    ),
                 ],
-                rows: _usuarios.map((usuario) {
-                  return DataRow(cells: [
-                    DataCell(Text(usuario.nombreCompleto)),
-                    DataCell(Text(usuario.correo)),
-                    DataCell(Text(usuario.rol?.nombre ?? '')),
-                    DataCell(Text(usuario.carrera?.nombre ?? '')),
-                    DataCell(Text(usuario.status)),
-                    DataCell(Row(
-                      children: [
-                        IconButton(
-                          icon: Icon(Icons.edit, color: Colors.blue),
-                          onPressed: () => _editUsuario(usuario),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.delete, color: Colors.red),
-                          onPressed: () => _deleteUsuario(usuario.id!),
-                        ),
-                      ],
-                    )),
-                  ]);
-                }).toList(),
               ),
             ),
-          ),
-        ]),
+            const SizedBox(height: 32),
+            const Divider(),
+            const Text(
+              "Listado de Usuarios",
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+            ),
+            const SizedBox(height: 12),
+
+            // Lista tipo tarjetas pero con filas que muestren columnas (como tabla)
+            ListView.separated(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              itemCount: _usuarios.length,
+              separatorBuilder: (_, __) => const Divider(),
+              itemBuilder: (context, index) {
+                final u = _usuarios[index];
+                return Card(
+                  elevation: 2,
+                  child: ListTile(
+                    title: Text(u.nombreCompleto),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Correo: ${u.correo}'),
+                        Text('Rol: ${u.rol?.nombre ?? "N/A"}'),
+                        Text('Carrera: ${u.carrera?.nombre ?? "N/A"}'),
+                        Text('Estatus: ${u.status}'),
+                      ],
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.blue),
+                          onPressed: () => _editarUsuario(u),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () => _eliminarUsuario(u.id!),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _nombreCtrl.dispose();
+    _apellidoPCtrl.dispose();
+    _apellidoMCtrl.dispose();
+    _correoCtrl.dispose();
+    _passwordCtrl.dispose();
+    super.dispose();
   }
 }
