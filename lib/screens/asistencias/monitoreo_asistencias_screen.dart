@@ -83,9 +83,12 @@ class _MonitoreoAsistenciasScreenState extends State<MonitoreoAsistenciasScreen>
                   hint: const Text('Filtrar por incidencia'),
                   items: [
                     'Todas',
-                    'Ninguna',
-                    'Justificada',
-                    'Injustificada',
+                    'Falta Justificada',
+                    'Visita a Asesor Academico',
+                    'Permiso por Enfermedad',
+                    'Permiso Social',
+                    'Cita Universidad',
+                    'Otro',
                   ].map((String value) {
                     return DropdownMenuItem<String>(
                       value: value,
