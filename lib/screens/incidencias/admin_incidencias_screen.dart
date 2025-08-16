@@ -17,6 +17,15 @@ class _AdminIncidenciasScreenState extends State<AdminIncidenciasScreen> {
   final IncidenciaService _service = IncidenciaService();
   late Future<List<IncidenciaDTO>> _incidenciasFuture;
 
+  // 🎨 Colores y estilos base IMDEC
+  final Color primaryColor = const Color.fromARGB(255, 221, 109, 173);
+  final Color primaryDark = const Color(0xFFC7549B);
+  final Color greyLight = Colors.grey.shade100; // más claro
+  final Color greyMedium = Colors.grey.shade600;
+  final Color greyDark = Colors.grey.shade800;
+  final Color whiteColor = Colors.white;
+  final Color blackColor = Colors.black87;
+
   @override
   void initState() {
     super.initState();
@@ -73,15 +82,24 @@ class _AdminIncidenciasScreenState extends State<AdminIncidenciasScreen> {
   DataRow _buildRow(IncidenciaDTO incidencia) {
     return DataRow(
       cells: [
-        DataCell(Text(incidencia.nombreCompleto ?? '')),
-        DataCell(Text(_formatearFecha(incidencia.fechaAusencia))),
-        DataCell(Text(incidencia.motivo)),
+        DataCell(
+          Text(
+            incidencia.nombreCompleto ?? '',
+            style: TextStyle(color: blackColor),
+          ),
+        ),
+        DataCell(
+          Text(
+            _formatearFecha(incidencia.fechaAusencia),
+            style: TextStyle(color: greyDark),
+          ),
+        ),
+        DataCell(Text(incidencia.motivo, style: TextStyle(color: greyDark))),
         DataCell(
           incidencia.documentoJustificativo != null
               ? InkWell(
                   onTap: () async {
-                    final apiUrl = dotenv
-                        .env['API_URL']!; // e.g. http://127.0.0.1:8000/api
+                    final apiUrl = dotenv.env['API_URL']!;
                     final baseUrl = apiUrl.replaceAll('/api', '');
                     final rutaRelativa = incidencia.documentoJustificativo!;
                     final urlCompleta = baseUrl + rutaRelativa;
@@ -98,19 +116,35 @@ class _AdminIncidenciasScreenState extends State<AdminIncidenciasScreen> {
                       );
                     }
                   },
-                  child: const Text(
+                  child: Text(
                     'Ver PDF',
                     style: TextStyle(
-                      color: Color.fromARGB(255, 243, 33, 173),
+                      color: primaryDark,
+                      fontWeight: FontWeight.w500,
                       decoration: TextDecoration.underline,
                     ),
                   ),
                 )
-              : const Text("No disponible"),
+              : Text("No disponible", style: TextStyle(color: greyMedium)),
         ),
-        DataCell(Text(_formatearHora(incidencia.horaSalida ?? ''))),
-        DataCell(Text(_formatearHora(incidencia.horaRegreso ?? ''))),
-        DataCell(Text('${incidencia.horaTransporte ?? 0} hrs')),
+        DataCell(
+          Text(
+            _formatearHora(incidencia.horaSalida ?? ''),
+            style: TextStyle(color: greyDark),
+          ),
+        ),
+        DataCell(
+          Text(
+            _formatearHora(incidencia.horaRegreso ?? ''),
+            style: TextStyle(color: greyDark),
+          ),
+        ),
+        DataCell(
+          Text(
+            '${incidencia.horaTransporte ?? 0} hrs',
+            style: TextStyle(color: greyDark),
+          ),
+        ),
         DataCell(
           Row(
             children: [
@@ -124,7 +158,7 @@ class _AdminIncidenciasScreenState extends State<AdminIncidenciasScreen> {
                     ? Colors.green
                     : incidencia.estatus == 'rechazado'
                     ? Colors.red
-                    : Colors.grey,
+                    : greyMedium,
                 size: 18,
               ),
               const SizedBox(width: 6),
@@ -136,14 +170,13 @@ class _AdminIncidenciasScreenState extends State<AdminIncidenciasScreen> {
                       ? Colors.green
                       : incidencia.estatus == 'rechazado'
                       ? Colors.red
-                      : Colors.grey[700],
+                      : greyDark,
                   fontWeight: FontWeight.w500,
                 ),
               ),
             ],
           ),
         ),
-
         DataCell(
           incidencia.estatus == 'pendiente'
               ? Row(
@@ -172,7 +205,13 @@ class _AdminIncidenciasScreenState extends State<AdminIncidenciasScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Listado de Incidencias')),
+      backgroundColor: greyLight,
+      appBar: AppBar(
+        title: const Text('Listado de Incidencias'),
+        backgroundColor: primaryColor,
+        foregroundColor: whiteColor,
+        elevation: 2,
+      ),
       body: FutureBuilder<List<IncidenciaDTO>>(
         future: _incidenciasFuture,
         builder: (context, snapshot) {
@@ -188,19 +227,124 @@ class _AdminIncidenciasScreenState extends State<AdminIncidenciasScreen> {
 
           return SingleChildScrollView(
             scrollDirection: Axis.horizontal,
-            child: DataTable(
-              columns: const [
-                DataColumn(label: Text('Nombre')),
-                DataColumn(label: Text('Fecha')),
-                DataColumn(label: Text('Motivo')),
-                DataColumn(label: Text('Justificación')),
-                DataColumn(label: Text('Hora Salida')),
-                DataColumn(label: Text('Hora Regreso')),
-                DataColumn(label: Text('Tiempo Transporte')),
-                DataColumn(label: Text('Estado')),
-                DataColumn(label: Text('Acciones')),
-              ],
-              rows: incidencias.map(_buildRow).toList(),
+            child: Padding(
+              // 👉 Ajustes de padding para subirlo y moverlo a la derecha
+              padding: const EdgeInsets.only(
+                top: 20.0,
+                left: 16.0,
+                right: 16.0,
+              ),
+              child: Transform.scale(
+                scale: 1.02,
+                alignment: Alignment
+                    .topLeft, // 👉 Alineación para anclarlo a la esquina superior izquierda
+                child: Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: greyMedium),
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Colors.black12,
+                        blurRadius: 8,
+                        offset: Offset(2, 4),
+                      ),
+                    ],
+                    color: whiteColor,
+                  ),
+                  child: DataTable(
+                    headingRowHeight: 50,
+                    dataRowHeight: 48,
+                    headingRowColor: MaterialStateProperty.all(
+                      primaryColor.withOpacity(0.15),
+                    ),
+                    dividerThickness: 1.5,
+                    columns: [
+                      DataColumn(
+                        label: Text(
+                          'Nombre',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: blackColor,
+                          ),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Text(
+                          'Fecha',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: blackColor,
+                          ),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Text(
+                          'Motivo',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: blackColor,
+                          ),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Text(
+                          'Justificación',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: blackColor,
+                          ),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Text(
+                          'Hora Salida',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: blackColor,
+                          ),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Text(
+                          'Hora Regreso',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: blackColor,
+                          ),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Text(
+                          'Tiempo Transporte',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: blackColor,
+                          ),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Text(
+                          'Estado',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: blackColor,
+                          ),
+                        ),
+                      ),
+                      DataColumn(
+                        label: Text(
+                          'Acciones',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: blackColor,
+                          ),
+                        ),
+                      ),
+                    ],
+                    rows: incidencias.map(_buildRow).toList(),
+                  ),
+                ),
+              ),
             ),
           );
         },
@@ -217,17 +361,24 @@ class _AdminIncidenciasScreenState extends State<AdminIncidenciasScreen> {
         content: TextField(
           controller: observacionController,
           maxLines: 4,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             hintText: 'Escribe la razón del rechazo...',
-            border: OutlineInputBorder(),
+            border: OutlineInputBorder(
+              borderSide: BorderSide(color: primaryColor),
+            ),
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
+            style: TextButton.styleFrom(foregroundColor: greyMedium),
             child: const Text('Cancelar'),
           ),
           ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: primaryColor,
+              foregroundColor: whiteColor,
+            ),
             onPressed: () async {
               final observacion = observacionController.text.trim();
               if (observacion.isEmpty) {
@@ -239,7 +390,7 @@ class _AdminIncidenciasScreenState extends State<AdminIncidenciasScreen> {
                 return;
               }
 
-              Navigator.of(context).pop(); // Cierra el diálogo
+              Navigator.of(context).pop();
 
               final prefs = await SharedPreferences.getInstance();
               final supervisorId = prefs.getInt('usuario_id');

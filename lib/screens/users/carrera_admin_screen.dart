@@ -21,6 +21,15 @@ class _CarreraAdminScreenState extends State<CarreraAdminScreen> {
   final _descripcionCtrl = TextEditingController();
   bool _loading = true;
 
+  // 🎨 Colores y estilos base IMDEC
+  final Color primaryColor = const Color.fromARGB(255, 221, 109, 173);
+  final Color primaryDark = const Color(0xFFC7549B);
+  final Color backgroundLight = const Color(0xFFF9F4F9);
+  final Color borderGray = Colors.grey.shade300;
+  final Color textPrimary = Colors.black87;
+  final Color textSecondary = Colors.grey.shade700;
+  final Color whiteColor = Colors.white;
+
   @override
   void initState() {
     super.initState();
@@ -49,8 +58,10 @@ class _CarreraAdminScreenState extends State<CarreraAdminScreen> {
     try {
       if (_editando != null) {
         await _service.actualizarCarrera(carrera);
+        Fluttertoast.showToast(msg: "Carrera actualizada con éxito");
       } else {
         await _service.crearCarrera(carrera);
+        Fluttertoast.showToast(msg: "Carrera creada con éxito");
       }
       _limpiar();
       await _cargarCarreras();
@@ -65,6 +76,7 @@ class _CarreraAdminScreenState extends State<CarreraAdminScreen> {
     _nombreCtrl.clear();
     _codigoCtrl.clear();
     _descripcionCtrl.clear();
+    setState(() {});
   }
 
   void _editar(CarreraDTO carrera) {
@@ -82,15 +94,30 @@ class _CarreraAdminScreenState extends State<CarreraAdminScreen> {
         title: const Text('Confirmar eliminación'),
         content: const Text('¿Estás seguro de eliminar esta carrera?'),
         actions: [
-          TextButton(child: const Text('Cancelar'), onPressed: () => Navigator.pop(context, false)),
-          TextButton(child: const Text('Eliminar'), onPressed: () => Navigator.pop(context, true)),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: whiteColor,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Eliminar'),
+          ),
         ],
       ),
     );
 
     if (confirmado ?? false) {
-      await _service.eliminarCarrera(id);
-      await _cargarCarreras();
+      try {
+        await _service.eliminarCarrera(id);
+        await _cargarCarreras();
+        Fluttertoast.showToast(msg: "Carrera eliminada con éxito");
+      } catch (e) {
+        Fluttertoast.showToast(msg: "Error al eliminar: $e");
+      }
     }
   }
 
@@ -98,15 +125,20 @@ class _CarreraAdminScreenState extends State<CarreraAdminScreen> {
     padding: const EdgeInsets.only(top: 16.0, bottom: 8),
     child: Text(
       texto,
-      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+      style: TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        color: primaryDark,
+      ),
     ),
   );
 
   Widget _contenedorDato(String valor) => Container(
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 16),
     decoration: BoxDecoration(
-      border: Border.all(color: Colors.grey),
+      border: Border.all(color: borderGray),
       borderRadius: BorderRadius.circular(4),
+      color: backgroundLight,
     ),
     child: Row(
       children: [
@@ -123,7 +155,17 @@ class _CarreraAdminScreenState extends State<CarreraAdminScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(title: const Text("Administrar Carreras"), centerTitle: true),
+      backgroundColor: backgroundLight,
+      appBar: AppBar(
+        title: const Text("Administrar Carreras"),
+        centerTitle: true,
+        backgroundColor: primaryColor,
+        foregroundColor: whiteColor,
+        elevation: 5,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(25)),
+        ),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -136,46 +178,96 @@ class _CarreraAdminScreenState extends State<CarreraAdminScreen> {
                   _campoTitulo("Nombre *"),
                   TextFormField(
                     controller: _nombreCtrl,
-                    decoration: const InputDecoration(border: OutlineInputBorder()),
-                    validator: (v) => v == null || v.isEmpty ? 'Requerido' : null,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: borderGray),
+                      ),
+                      filled: true,
+                      fillColor: whiteColor,
+                    ),
+                    validator: (v) =>
+                        v == null || v.isEmpty ? 'Requerido' : null,
                   ),
                   _campoTitulo("Código"),
                   TextFormField(
                     controller: _codigoCtrl,
-                    decoration: const InputDecoration(border: OutlineInputBorder()),
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: borderGray),
+                      ),
+                      filled: true,
+                      fillColor: whiteColor,
+                    ),
                   ),
                   _campoTitulo("Descripción"),
                   TextFormField(
                     controller: _descripcionCtrl,
-                    decoration: const InputDecoration(border: OutlineInputBorder()),
+                    maxLines: 3,
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: borderGray),
+                      ),
+                      filled: true,
+                      fillColor: whiteColor,
+                    ),
                   ),
                   const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       onPressed: _guardar,
-                      icon: Icon(_editando != null ? Icons.save : Icons.add),
-                      label: Text(_editando != null ? 'ACTUALIZAR CARRERA' : 'AGREGAR CARRERA'),
+                      icon: Icon(
+                        _editando != null ? Icons.save : Icons.add,
+                        size: 26,
+                      ),
+                      label: Text(
+                        _editando != null
+                            ? 'ACTUALIZAR CARRERA'
+                            : 'AGREGAR CARRERA',
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: const Color.fromARGB(255, 243, 33, 152),
-                        foregroundColor: Colors.white,
+                        backgroundColor: primaryColor,
+                        foregroundColor: whiteColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 4,
                       ),
                     ),
                   ),
                   if (_editando != null)
-                    TextButton(
-                      onPressed: _limpiar,
-                      child: const Text("Cancelar edición"),
+                    Center(
+                      child: TextButton(
+                        onPressed: _limpiar,
+                        style: TextButton.styleFrom(
+                          foregroundColor: primaryDark,
+                        ),
+                        child: const Text(
+                          "Cancelar edición",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
                     ),
                 ],
               ),
             ),
             const SizedBox(height: 32),
             const Divider(),
-            const Text(
+            Text(
               "Listado de Carreras",
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: primaryDark,
+              ),
             ),
             const SizedBox(height: 12),
             ListView.builder(
@@ -185,18 +277,39 @@ class _CarreraAdminScreenState extends State<CarreraAdminScreen> {
               itemBuilder: (context, index) {
                 final c = _carreras[index];
                 return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: ListTile(
-                    title: Text(c.nombre),
-                    subtitle: Text(c.descripcion ?? ''),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 8,
+                    ),
+                    title: Text(
+                      c.nombre,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                    ),
+                    subtitle: Text(
+                      c.descripcion ?? 'Sin descripción',
+                      style: TextStyle(color: textSecondary),
+                    ),
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         IconButton(
                           icon: const Icon(Icons.edit, color: Colors.blue),
+                          tooltip: 'Editar',
                           onPressed: () => _editar(c),
                         ),
                         IconButton(
                           icon: const Icon(Icons.delete, color: Colors.red),
+                          tooltip: 'Eliminar',
                           onPressed: () => _eliminar(c.id!),
                         ),
                       ],

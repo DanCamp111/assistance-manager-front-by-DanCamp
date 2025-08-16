@@ -9,7 +9,7 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-  http: ^0.13.5           # Para llamadas API
+  http: 1.1.0           # Para llamadas API
   provider: ^6.0.5        # Gestión de estado
   flutter_dotenv: ^5.0.2  # Variables de entorno
   intl: ^0.18.1          # Formato fechas/horas
@@ -21,6 +21,7 @@ dependencies:
   excel: ^2.0.0   
   mime: ^2.0.0 
   url_launcher: ^6.2.4
+  google_fonts: ^6.1.0
   
 dev_dependencies:
   flutter_test:
@@ -31,4 +32,5 @@ flutter:
   uses-material-design: true
   assets:
     - .env
+    - assets/logo.png
 

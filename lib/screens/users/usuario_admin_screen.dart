@@ -24,6 +24,7 @@ class _UsuarioAdminScreenState extends State<UsuarioAdminScreen> {
 
   UsuarioDTO? _editando;
   bool _obscurePassword = true;
+  bool _isLoading = true;
 
   final TextEditingController _nombreCtrl = TextEditingController();
   final TextEditingController _apellidoPCtrl = TextEditingController();
@@ -35,6 +36,15 @@ class _UsuarioAdminScreenState extends State<UsuarioAdminScreen> {
   int? _carreraId;
   String _status = 'activo';
 
+  // 🎨 Colores y estilos base IMDEC
+  final Color primaryColor = const Color.fromARGB(255, 221, 109, 173);
+  final Color primaryDark = const Color(0xFFC7549B);
+  final Color backgroundLight = const Color(0xFFF9F4F9);
+  final Color borderGray = Colors.grey.shade300;
+  final Color textPrimary = Colors.black87;
+  final Color textSecondary = Colors.grey.shade700;
+  final Color whiteColor = Colors.white;
+
   @override
   void initState() {
     super.initState();
@@ -42,6 +52,7 @@ class _UsuarioAdminScreenState extends State<UsuarioAdminScreen> {
   }
 
   Future<void> _cargarDatos() async {
+    setState(() => _isLoading = true);
     try {
       final usuarios = await _service.getUsuarios();
       final roles = await RolService().getRoles();
@@ -54,6 +65,8 @@ class _UsuarioAdminScreenState extends State<UsuarioAdminScreen> {
       });
     } catch (e) {
       Fluttertoast.showToast(msg: "Error al cargar datos: $e");
+    } finally {
+      setState(() => _isLoading = false);
     }
   }
 
@@ -123,8 +136,18 @@ class _UsuarioAdminScreenState extends State<UsuarioAdminScreen> {
         title: const Text("Confirmar eliminación"),
         content: const Text("¿Seguro que quieres eliminar este usuario?"),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text("Cancelar")),
-          TextButton(onPressed: () => Navigator.pop(context, true), child: const Text("Eliminar")),
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Cancelar"),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: whiteColor,
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text("Eliminar"),
+          ),
         ],
       ),
     );
@@ -142,13 +165,38 @@ class _UsuarioAdminScreenState extends State<UsuarioAdminScreen> {
 
   Widget _tituloCampo(String texto) => Padding(
         padding: const EdgeInsets.only(top: 16.0, bottom: 8),
-        child: Text(texto, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+        child: Text(
+          texto,
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+            color: primaryDark,
+          ),
+        ),
       );
 
   @override
   Widget build(BuildContext context) {
+    if (_isLoading) {
+      return const Scaffold(
+        body: Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+    }
+
     return Scaffold(
-      appBar: AppBar(title: const Text("Administrar Usuarios"), centerTitle: true),
+      backgroundColor: backgroundLight,
+      appBar: AppBar(
+        title: const Text("Administrar Usuarios"),
+        centerTitle: true,
+        backgroundColor: primaryColor,
+        foregroundColor: whiteColor,
+        elevation: 5,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(bottom: Radius.circular(25)),
+        ),
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
@@ -161,38 +209,75 @@ class _UsuarioAdminScreenState extends State<UsuarioAdminScreen> {
                   _tituloCampo("Nombre *"),
                   TextFormField(
                     controller: _nombreCtrl,
-                    decoration: const InputDecoration(border: OutlineInputBorder()),
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: borderGray),
+                      ),
+                      filled: true,
+                      fillColor: whiteColor,
+                    ),
                     validator: (v) => v == null || v.isEmpty ? "Requerido" : null,
                   ),
                   _tituloCampo("Apellido Paterno *"),
                   TextFormField(
                     controller: _apellidoPCtrl,
-                    decoration: const InputDecoration(border: OutlineInputBorder()),
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: borderGray),
+                      ),
+                      filled: true,
+                      fillColor: whiteColor,
+                    ),
                     validator: (v) => v == null || v.isEmpty ? "Requerido" : null,
                   ),
                   _tituloCampo("Apellido Materno *"),
                   TextFormField(
                     controller: _apellidoMCtrl,
-                    decoration: const InputDecoration(border: OutlineInputBorder()),
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: borderGray),
+                      ),
+                      filled: true,
+                      fillColor: whiteColor,
+                    ),
                     validator: (v) => v == null || v.isEmpty ? "Requerido" : null,
                   ),
                   _tituloCampo("Correo *"),
                   TextFormField(
                     controller: _correoCtrl,
-                    decoration: const InputDecoration(border: OutlineInputBorder()),
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: borderGray),
+                      ),
+                      filled: true,
+                      fillColor: whiteColor,
+                    ),
                     validator: (v) {
                       if (v == null || v.isEmpty) return "Requerido";
                       if (!v.contains("@")) return "Correo inválido";
                       return null;
                     },
                   ),
-                  _tituloCampo("Contraseña ${_editando == null ? "*" : "(dejar vacío para no cambiar)"}"),
+                  _tituloCampo(
+                    "Contraseña ${_editando == null ? "*" : "(dejar vacío para no cambiar)"}",
+                  ),
                   TextFormField(
                     controller: _passwordCtrl,
                     decoration: InputDecoration(
-                      border: const OutlineInputBorder(),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: borderGray),
+                      ),
+                      filled: true,
+                      fillColor: whiteColor,
                       suffixIcon: IconButton(
-                        icon: Icon(_obscurePassword ? Icons.visibility : Icons.visibility_off),
+                        icon: Icon(
+                          _obscurePassword ? Icons.visibility : Icons.visibility_off,
+                        ),
                         onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                       ),
                     ),
@@ -210,7 +295,14 @@ class _UsuarioAdminScreenState extends State<UsuarioAdminScreen> {
                         .map((r) => DropdownMenuItem(value: r.id, child: Text(r.nombre)))
                         .toList(),
                     onChanged: (v) => setState(() => _rolId = v),
-                    decoration: const InputDecoration(border: OutlineInputBorder()),
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: borderGray),
+                      ),
+                      filled: true,
+                      fillColor: whiteColor,
+                    ),
                     validator: (v) => v == null ? "Requerido" : null,
                   ),
                   _tituloCampo("Carrera"),
@@ -220,7 +312,14 @@ class _UsuarioAdminScreenState extends State<UsuarioAdminScreen> {
                         .map((c) => DropdownMenuItem(value: c.id, child: Text(c.nombre)))
                         .toList(),
                     onChanged: (v) => setState(() => _carreraId = v),
-                    decoration: const InputDecoration(border: OutlineInputBorder()),
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: borderGray),
+                      ),
+                      filled: true,
+                      fillColor: whiteColor,
+                    ),
                   ),
                   _tituloCampo("Estatus"),
                   DropdownButtonFormField<String>(
@@ -230,57 +329,90 @@ class _UsuarioAdminScreenState extends State<UsuarioAdminScreen> {
                       DropdownMenuItem(value: 'inactivo', child: Text('Inactivo')),
                     ],
                     onChanged: (v) => setState(() => _status = v!),
-                    decoration: const InputDecoration(border: OutlineInputBorder()),
+                    decoration: InputDecoration(
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                        borderSide: BorderSide(color: borderGray),
+                      ),
+                      filled: true,
+                      fillColor: whiteColor,
+                    ),
                   ),
                   const SizedBox(height: 24),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       onPressed: _guardarUsuario,
-                      icon: Icon(_editando == null ? Icons.add : Icons.save),
-                      label: Text(_editando == null ? "Agregar Usuario" : "Actualizar Usuario"),
+                      icon: Icon(_editando == null ? Icons.add : Icons.save, size: 26),
+                      label: Text(
+                        _editando == null ? "Agregar Usuario" : "Actualizar Usuario",
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                      ),
                       style: ElevatedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 16),
-                        backgroundColor: const Color.fromARGB(255, 243, 33, 152),
-                        foregroundColor: Colors.white,
+                        backgroundColor: primaryColor,
+                        foregroundColor: whiteColor,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        elevation: 4,
                       ),
                     ),
                   ),
                   if (_editando != null)
-                    TextButton(
-                      onPressed: _limpiarFormulario,
-                      child: const Text("Cancelar edición"),
+                    Center(
+                      child: TextButton(
+                        onPressed: _limpiarFormulario,
+                        style: TextButton.styleFrom(foregroundColor: primaryDark),
+                        child: const Text(
+                          "Cancelar edición",
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                      ),
                     ),
                 ],
               ),
             ),
             const SizedBox(height: 32),
             const Divider(),
-            const Text(
+            Text(
               "Listado de Usuarios",
-              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+                color: primaryDark,
+              ),
             ),
             const SizedBox(height: 12),
-
-            // Lista tipo tarjetas pero con filas que muestren columnas (como tabla)
             ListView.separated(
               shrinkWrap: true,
               physics: const NeverScrollableScrollPhysics(),
               itemCount: _usuarios.length,
-              separatorBuilder: (_, __) => const Divider(),
+              separatorBuilder: (_, __) => const SizedBox(height: 8),
               itemBuilder: (context, index) {
                 final u = _usuarios[index];
                 return Card(
                   elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: ListTile(
-                    title: Text(u.nombreCompleto),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                    title: Text(
+                      u.nombreCompleto,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: textPrimary,
+                      ),
+                    ),
                     subtitle: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Correo: ${u.correo}'),
-                        Text('Rol: ${u.rol?.nombre ?? "N/A"}'),
-                        Text('Carrera: ${u.carrera?.nombre ?? "N/A"}'),
-                        Text('Estatus: ${u.status}'),
+                        Text('Correo: ${u.correo}', style: TextStyle(color: textSecondary)),
+                        Text('Rol: ${u.rol?.nombre ?? "N/A"}', style: TextStyle(color: textSecondary)),
+                        Text('Carrera: ${u.carrera?.nombre ?? "N/A"}', style: TextStyle(color: textSecondary)),
+                        Text('Estatus: ${u.status}', style: TextStyle(color: textSecondary)),
                       ],
                     ),
                     trailing: Row(
@@ -288,10 +420,12 @@ class _UsuarioAdminScreenState extends State<UsuarioAdminScreen> {
                       children: [
                         IconButton(
                           icon: const Icon(Icons.edit, color: Colors.blue),
+                          tooltip: 'Editar',
                           onPressed: () => _editarUsuario(u),
                         ),
                         IconButton(
                           icon: const Icon(Icons.delete, color: Colors.red),
+                          tooltip: 'Eliminar',
                           onPressed: () => _eliminarUsuario(u.id!),
                         ),
                       ],
