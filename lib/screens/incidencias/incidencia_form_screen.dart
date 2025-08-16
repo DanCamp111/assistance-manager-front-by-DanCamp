@@ -93,35 +93,36 @@ class _IncidenciaFormScreenState extends State<IncidenciaFormScreen> {
       return;
     }
 
-    // Aquí iría tu lógica para enviar los datos al servidor
-    // Ejemplo genérico:
-    final incidencia = {
-      'usuarioId': usuarioId,
-      'tipoIncidencia': tipoFinal,
-      'motivo': _motivoCtrl.text,
-      'fechaAusencia': _fechaCtrl.text,
-      'horaSalida': _horaSalidaCtrl.text.isNotEmpty
-          ? _horaSalidaCtrl.text
-          : null,
-      'horaRegreso': _horaRegresoCtrl.text.isNotEmpty
-          ? _horaRegresoCtrl.text
-          : null,
-      'horaTransporte': _horaTransporteCtrl.text.isNotEmpty
+    final incidencia = IncidenciaDTO(
+      usuarioId: usuarioId,
+      tipoIncidencia: tipoFinal,
+      motivo: _motivoCtrl.text,
+      fechaAusencia: _fechaCtrl.text,
+      horaSalida: _horaSalidaCtrl.text.isNotEmpty ? _horaSalidaCtrl.text : null,
+      horaRegreso: _horaRegresoCtrl.text.isNotEmpty ? _horaRegresoCtrl.text : null,
+      horaTransporte: _horaTransporteCtrl.text.isNotEmpty
           ? double.tryParse(_horaTransporteCtrl.text)
           : null,
-      'documentoJustificativo': null,
-    };
+      documentoJustificativo: null,
+    );
 
     try {
-      // Simulación de envío exitoso
-      await Future.delayed(const Duration(seconds: 1));
+      final creada = await IncidenciaService().createIncidencia(incidencia);
+
+      if (_file != null) {
+        final path = await IncidenciaService().subirDocumento(creada.id!, _file!);
+        if (path != null) {
+          creada.documentoJustificativo = path;
+        }
+      }
+
       _mostrarDialogoExito();
     } catch (e) {
       Fluttertoast.showToast(msg: "Error: $e");
     }
   }
 
-  void _mostrarDialogoExito() {
+void _mostrarDialogoExito() {
     showDialog(
       context: context,
       barrierDismissible: false,
@@ -129,46 +130,36 @@ class _IncidenciaFormScreenState extends State<IncidenciaFormScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.check_circle_outline, color: primaryColor, size: 60),
-            const SizedBox(height: 16),
+          children: const [
+            Icon(Icons.check_circle_outline, color: Colors.green, size: 60),
+            SizedBox(height: 16),
             Text(
               "¡Registro exitoso!",
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: primaryDark,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
-            const SizedBox(height: 12),
+            SizedBox(height: 8),
             Text(
               "Tu incidencia ha sido registrada correctamente.",
               textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 16, color: textSecondary),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () {
-              // Cerrar dialogo y regresar a home
               Navigator.of(context).pop();
-              Navigator.of(context).pop();
+              Navigator.of(context).pushAndRemoveUntil(
+                MaterialPageRoute(builder: (_) => const HomeScreen()),
+                (route) => false,
+              );
             },
-            style: TextButton.styleFrom(
-              foregroundColor: primaryColor,
-              textStyle: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-              ),
-            ),
             child: const Text("Aceptar"),
           ),
         ],
       ),
     );
   }
-
+  
   @override
   void dispose() {
     _motivoCtrl.dispose();
